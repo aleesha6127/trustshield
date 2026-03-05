@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journey Tracker — TrustShield</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden; }
+  
+  #map { height: 100vh; width: 100%; z-index: 1; }
+  
+  /* --- CONTROL PANEL (BOTTOM SHEET) --- */
+  .control-panel {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    background: white; border-radius: 20px 20px 0 0;
+    padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+    z-index: 1000; transition: transform 0.3s ease;
+  }
+  
+  /* --- SOS BUTTON (FLOATING) --- */
+  .sos-float {
+    position: absolute; top: 20px; right: 20px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: radial-gradient(circle, #ff5252, #d50000);
+    color: white; border: none; font-weight: bold; font-size: 18px;
+    box-shadow: 0 5px 15px rgba(213, 0, 0, 0.5);
+    z-index: 1000; display: flex; justify-content: center; align-items: center;
+    cursor: pointer; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+  /* --- REPORT STOPPAGE BUTTON --- */
+  .btn-stoppage {
+    background: #f59e0b; color: white; border: none;
+    font-weight: bold; width: 100%; margin-top: 10px;
+    border-radius: 12px; padding: 12px;
+  }
+  .btn-stoppage:hover { background: #d97706; }
+
+  /* --- SEARCH BAR OVERRIDE --- */
+  .leaflet-control-geocoder { 
+    width: 100%; max-width: 300px; 
+    border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+  }
+  
+  .status-badge {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.8); color: white; padding: 5px 15px;
+    border-radius: 20px; font-size: 12px; z-index: 1000; display: none;
+  }
+  
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="journeyStatus" class="status-badge">🟢 Journey Active - Tracking On</div>
+
+<button class="sos-float" onclick="triggerSOS()">SOS</button>
+
+<div class="control-panel" id="panel">
+    
+    <div id="setupView">
+        <h5 class="fw-bold">🚗 Start New Journey</h5>
+        <p class="text-muted small">Search destination on map or click a location.</p>
+        <button class="btn btn-primary w-100 py-3 fw-bold" onclick="confirmStart()">Start Journey</button>
+        <button onclick="window.location='/dashboard'" class="btn btn-link text-muted w-100 mt-2">Cancel</button>
+    </div>
+
+    <div id="activeView" class="hidden">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold m-0">Heading to Destination</h5>
+                <small class="text-muted" id="timerDisplay">00:00:00</small>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="finishJourney()">Arrived</button>
+        </div>
+        
+        <hr>
+        
+        <div class="row g-2">
+            <div class="col-12">
+                <button class="btn-stoppage" onclick="reportStoppage()">⚠ Report Unusual Stoppage</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+let map, userMarker, routingControl;
+let destinationLatLng = null;
+let journeyActive = false;
+let journeyTimer;
+let sec = 0;
+
+// 1. INITIALIZE MAP
+function initMap() {
+    map = L.map('map').setView([10.8505, 76.2711], 13); // Default view
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Custom Icons
+    const carIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/3097/3097180.png', // Car Icon
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    });
+
+    // Get Current Location
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition((pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const newLatLng = new L.LatLng(lat, lng);
+
+            if (!userMarker) {
+                userMarker = L.marker(newLatLng, {icon: carIcon}).addTo(map);
+                map.setView(newLatLng, 15);
+            } else {
+                userMarker.setLatLng(newLatLng);
+            }
+            
+            // Recalculate Route if Active
+            if(journeyActive && routingControl && destinationLatLng) {
+                routingControl.setWaypoints([newLatLng, destinationLatLng]);
+            }
+        }, err => console.error(err), {enableHighAccuracy: true});
+    }
+
+    // Add Search Control
+    L.Control.geocoder({
+        defaultMarkGeocode: false
+    })
+    .on('markgeocode', function(e) {
+        const bbox = e.geocode.bbox;
+        const poly = L.polygon([
+            bbox.getSouthEast(), bbox.getNorthEast(),
+            bbox.getNorthWest(), bbox.getSouthWest()
+        ]);
+        map.fitBounds(poly.getBounds());
+        
+        // Set Destination
+        setDestination(e.geocode.center);
+    })
+    .addTo(map);
+
+    // Click to Set Destination
+    map.on('click', function(e) {
+        if(!journeyActive) setDestination(e.latlng);
+    });
+}
+
+let destMarker;
+function setDestination(latlng) {
+    destinationLatLng = latlng;
+    
+    if (destMarker) map.removeLayer(destMarker);
+    destMarker = L.marker(latlng).addTo(map).bindPopup("Destination").openPopup();
+    
+    // Draw Preview Line
+    if(userMarker) {
+        if(routingControl) map.removeControl(routingControl);
+        routingControl = L.Routing.control({
+            waypoints: [userMarker.getLatLng(), latlng],
+            routeWhileDragging: false,
+            show: false, // Hide text instructions
+            addWaypoints: false
+        }).addTo(map);
+    }
+}
+
+// 2. START JOURNEY LOGIC
+function confirmStart() {
+    if(!destinationLatLng) { alert("Please select a destination on the map or search bar."); return; }
+    
+    journeyActive = true;
+    
+    // UI Updates
+    document.getElementById("setupView").classList.add("hidden");
+    document.getElementById("activeView").classList.remove("hidden");
+    document.getElementById("journeyStatus").style.display = "block";
+    
+    // Start Timer
+    journeyTimer = setInterval(() => {
+        sec++;
+        const date = new Date(0);
+        date.setSeconds(sec);
+        document.getElementById("timerDisplay").innerText = date.toISOString().substr(11, 8);
+    }, 1000);
+
+    // Notify Backend
+    if(userMarker){
+        const startPos = userMarker.getLatLng();
+        fetch("/start_journey_api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                destination: "Map Location",
+                lat: startPos.lat,
+                lon: startPos.lng
+            })
+        });
+    }
+}
+
+function finishJourney() {
+    journeyActive = false;
+    clearInterval(journeyTimer);
+    alert("🎉 Journey Completed!");
+    window.location.href = "/dashboard";
+}
+
+// 3. STOPPAGE REPORT
+async function reportStoppage() {
+    if(!confirm("Report Unusual Stoppage to your emergency contacts?")) return;
+    
+    const btn = document.querySelector(".btn-stoppage");
+    btn.innerHTML = "📡 Reporting...";
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+             await fetch("/report_stoppage", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude
+                })
+            });
+            alert("🚨 Stoppage Reported. Emergency contacts notified.");
+            btn.innerHTML = "⚠ Report Unusual Stoppage";
+        });
+    }
+}
+
+// 4. SOS FUNCTION (Reused)
+async function triggerSOS() {
+    if(!confirm("TRIGGER SOS EMERGENCY ALERT?")) return;
+    
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        await fetch("/send_sos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude
+            })
+        });
+        alert("🚨 SOS SENT!");
+    });
+}
+
+// Initialize
+initMap();
+
+</script>
+</body>
+</html>

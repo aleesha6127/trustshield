@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TrustShield — Missing Persons</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{ background:#f0f9ff; font-family:Poppins, Arial; padding: 15px; }
+
+.person-card{ 
+    background:white; 
+    border-radius:18px; 
+    padding:20px; 
+    box-shadow:0 10px 30px rgba(0,0,0,.05); 
+    transition:.3s; 
+    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Touch-friendly hover state */
+@media (hover: hover) {
+    .person-card:hover{ transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,.1); }
+}
+
+.status-badge{ padding:5px 12px; border-radius:12px; font-size:12px; font-weight:bold; }
+.bg-Missing { background: #fee2e2; color: #991b1b; }
+.bg-Sighted { background: #fef9c3; color: #854d0e; }
+.bg-Found { background: #dcfce7; color: #166534; }
+
+/* PHOTO STYLING */
+.photo-frame {
+    width: 100%; height: 200px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    display: flex; justify-content: center; align-items: center;
+}
+.photo-img { width: 100%; height: 100%; object-fit: cover; }
+.photo-placeholder { font-size: 40px; color: #94a3b8; font-weight: bold; }
+
+.card-actions { margin-top: auto; }
+</style>
+</head>
+<body>
+
+<div class="container pb-5">
+  <button onclick="location.href='/dashboard'" class="btn btn-outline-dark btn-sm mb-3">⬅ Dashboard</button>
+  
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <h3 class="fw-bold mb-0">📢 Missing Persons</h3>
+    <button class="btn btn-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addModal">➕ Report Missing</button>
+  </div>
+
+  <div class="row g-3">
+    {% for p in people %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="person-card">
+        
+        <div class="photo-frame">
+            {% if p.photo %}
+                <img src="{{ url_for('static', filename=p.photo) }}" class="photo-img" alt="{{ p.name }}">
+            {% else %}
+                <div class="photo-placeholder">{{ p.name[0] | upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-start">
+           <span class="text-muted small">ID: {{ p.case_id }}</span>
+           <span class="status-badge bg-{{ p.status }}">{{ p.status }}</span>
+        </div>
+        
+        <h4 class="mt-2 fw-bold">{{ p.name }}</h4>
+        <p class="mb-1 text-dark">🧭 Age: {{ p.age }} • {{ p.gender }}</p>
+        <p class="mb-1 text-dark">📍 Last seen: {{ p.last_seen_place }} <br><small class="text-muted">({{ p.last_seen_date }})</small></p>
+        <p class="text-muted small mb-3">{{ p.description }}</p>
+        
+        <div class="card-actions d-grid gap-2">
+           <a href="tel:{{ p.contact_guardian }}" class="btn btn-outline-success btn-sm w-100">📞 Call Guardian</a>
+           
+           {% if p.reporter_uid == user_id %}
+           <form action="/update_missing_status" method="POST" class="w-100">
+               <input type="hidden" name="doc_id" value="{{ p.doc_id }}">
+               <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                   <option selected disabled>Update Status</option>
+                   <option value="Missing">Missing</option>
+                   <option value="Sighted">Sighted</option>
+                   <option value="Found">Found</option>
+               </select>
+           </form>
+           <form action="/delete_missing" method="POST" class="w-100">
+               <input type="hidden" name="doc_id" value="{{ p.doc_id }}">
+               <button class="btn btn-outline-danger btn-sm w-100">🗑 Delete</button>
+           </form>
+           {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Report Missing Person</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/report_missing" method="POST" enctype="multipart/form-data">
+            <label class="small fw-bold">Full Name</label>
+            <input name="name" class="form-control mb-2" required>
+            
+            <div class="row mb-2">
+                <div class="col-6">
+                    <label class="small fw-bold">Age</label>
+                    <input name="age" type="number" class="form-control" required>
+                </div>
+                <div class="col-6">
+                    <label class="small fw-bold">Gender</label>
+                    <select name="gender" class="form-control">
+                        <option>Female</option><option>Male</option><option>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="small fw-bold">Photo (Optional)</label>
+            <input type="file" name="photo" class="form-control mb-2" accept="image/*">
+
+            <label class="small fw-bold">Last Seen Location</label>
+            <input name="place" class="form-control mb-2" required>
+
+            <label class="small fw-bold">Date Missing</label>
+            <input name="date" type="date" class="form-control mb-2" required>
+
+            <label class="small fw-bold">Guardian Contact</label>
+            <input name="guardian" type="tel" class="form-control mb-2" required>
+
+            <label class="small fw-bold">Description</label>
+            <textarea name="description" class="form-control mb-3" rows="3" placeholder="Clothing, Height, etc."></textarea>
+            
+            <button type="submit" class="btn btn-primary w-100 py-2">Submit Report</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Danger Zone Map – TrustShield</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* --- BASE STYLES --- */
+body{ background:#eef3ff; font-family:Poppins; margin:0; overflow: hidden; }
+#map{ height:100vh; width:100%; }
+
+/* Floating Header */
+.header-box{ 
+  position:absolute; top:20px; left:20px; 
+  background:white; padding:15px 18px; 
+  border-radius:16px; box-shadow:0 15px 45px rgba(0,0,0,.25); 
+  z-index:999; 
+}
+
+/* Legend/Key */
+.legend-box {
+    margin-top: 5px; font-size: 12px;
+}
+.dot { height: 10px; width: 10px; display: inline-block; border-radius: 50%; margin-right: 5px; }
+.red { background-color: red; }
+.orange { background-color: orange; }
+
+/* Side/Bottom List */
+.zone-list{ 
+  position:absolute; bottom:20px; right:20px; 
+  background:white; width:300px; max-height:40vh; 
+  overflow-y:auto; border-radius:16px; padding:15px; 
+  box-shadow:0 15px 45px rgba(0,0,0,.25); 
+  z-index:999; 
+}
+
+/* --- CLICKABLE ZONE BOX --- */
+.zone-box{ 
+    padding:10px; margin-bottom:8px; 
+    border-radius:10px; font-size: 13px; 
+    border-left: 4px solid; 
+    cursor: pointer;             /* Shows hand icon */
+    transition: transform 0.1s;  /* Smooth click effect */
+}
+.zone-box:hover { background-color: #f8f9fa; }
+.zone-box:active { transform: scale(0.98); }
+
+.box-danger { background:#fff0f0; border-color: red; }
+.box-report { background:#fff8e1; border-color: orange; }
+
+.back-btn{ 
+  position: absolute; top: 20px; right: 20px; z-index: 999; 
+  padding: 8px 16px; background: black; color: white; 
+  border-radius: 30px; text-decoration: none; font-weight: bold; 
+}
+
+/* 🚨 RED ALERT OVERLAY 🚨 */
+#dangerOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(220, 38, 38, 0.95);
+    z-index: 10000; flex-direction: column; align-items: center; justify-content: center;
+    color: white; text-align: center; animation: flash 1s infinite;
+}
+@keyframes flash { 0%{opacity:1;} 50%{opacity:0.9;} 100%{opacity:1;} }
+
+@media (max-width: 768px) {
+    .zone-list { left: 10px; right: 10px; width: auto; bottom: 10px; }
+    .header-box { width: auto; right: 80px; }
+}
+</style>
+</head>
+<body>
+
+<div id="dangerOverlay">
+    <h1 style="font-size: 80px;">⚠</h1>
+    <h2>WARNING!</h2>
+    <p>You have entered a High Risk Zone</p>
+    <h3 id="zoneNameDisplay" style="background:white; color:red; padding:5px 15px; border-radius:20px;">...</h3>
+    <button onclick="dismissAlert()" class="btn" style="background:white; color:red; padding:12px 30px; border:none; border-radius:30px; font-weight:bold; margin-top:20px; cursor:pointer; font-size:16px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">I AM SAFE</button>
+</div>
+
+<div class="header-box">
+  <b>Safety Map</b>
+  <div class="legend-box">
+      <span class="dot red"></span>Official Danger Zone<br>
+      <span class="dot orange"></span>User Reported Incident
+  </div>
+</div>
+
+<a href="/dashboard" class="back-btn">⬅ Dashboard</a>
+
+<div class="zone-list" id="zoneList">
+  <b>Nearby Risks</b>
+  <p class="text-muted small mb-2">Tap any item to locate it on map</p>
+  <p id="loadMsg" class="text-muted small">Fetching data...</p>
+</div>
+
+<div id="map"></div>
+<audio id="alertSound"><source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map, userMarker;
+let alertSound = document.getElementById("alertSound");
+let alertActive = false; 
+
+// 1. Initialize Map
+map = L.map('map').setView([0, 0], 13); 
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Custom Icons
+var userIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149060.png', iconSize: [30, 30] });
+var reportIcon = L.icon({ 
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/564/564619.png', // Orange Alert Icon
+    iconSize: [24, 24] 
+});
+
+// 2. Start Tracking
+if(navigator.geolocation){
+    navigator.geolocation.watchPosition(updateUserLocation, console.error, {enableHighAccuracy:true});
+    loadMapData();
+} else {
+    alert("GPS not supported");
+}
+
+function updateUserLocation(pos){
+    let lat = pos.coords.latitude;
+    let lng = pos.coords.longitude;
+
+    if(!userMarker){
+        userMarker = L.marker([lat, lng], {icon: userIcon}).addTo(map).bindPopup("You are here");
+        map.setView([lat, lng], 15);
+    } else {
+        userMarker.setLatLng([lat, lng]);
+    }
+    
+    checkDanger(lat, lng);
+}
+
+// 3. Load Zones & Reports
+let dangerZonesData = [];
+let incidentReportsData = [];
+
+function loadMapData(){
+    fetch("/danger_data")
+    .then(r=>r.json())
+    .then(data=>{
+        document.getElementById("loadMsg").style.display="none";
+        
+        // A. Handle Official Zones (Red)
+        dangerZonesData = data.zones || [];
+        (data.zones || []).forEach(z=>{
+            // Pass lat/lon for click handler
+            addToList(z.name, `${z.category} • ${z.risk}`, "box-danger", z.latitude, z.longitude);
+            
+            L.circle([z.latitude, z.longitude], {
+                color: 'red', fillColor: '#f03', fillOpacity: 0.3, radius: 300 
+            }).addTo(map).bindPopup(`<b>${z.name}</b><br>OFFICIAL DANGER ZONE<br>${z.risk} Risk`);
+        });
+
+        // B. Handle User Reports (Orange Markers)
+        incidentReportsData = data.reports || [];
+        (data.reports || []).forEach(r=>{
+            // Pass lat/lon for click handler
+            addToList("Reported: " + r.type, r.details, "box-report", r.latitude, r.longitude);
+
+            L.marker([r.latitude, r.longitude], {icon: reportIcon})
+             .addTo(map)
+             .bindPopup(`<b>User Report: ${r.type}</b><br>${r.details}<br><small>${r.time}</small>`);
+        });
+    });
+}
+
+// 4. Add to List with CLICK Function
+function addToList(title, sub, cssClass, lat, lon){
+    // Escape quotes just in case title has them
+    let safeTitle = title.replace(/'/g, "\\'"); 
+    
+    document.getElementById("zoneList").innerHTML +=
+    `<div class='zone-box ${cssClass}' onclick="focusOnZone(${lat}, ${lon})">
+    <b>${title}</b><br><span class="text-muted">${sub}</span>
+    </div>`;
+}
+
+// 5. FLY TO ZONE FUNCTION
+function focusOnZone(lat, lon){
+    map.flyTo([lat, lon], 17, {
+        animate: true,
+        duration: 1.5 // Speed of animation
+    });
+}
+
+// 6. SMART ALERT LOGIC
+function checkDanger(userLat, userLon){
+    let inDanger = false;
+    let zoneName = "";
+
+    // CHECK A: Official Danger Zones (Red Circles)
+    dangerZonesData.forEach(z => {
+        let dist = getDistance(userLat, userLon, z.latitude, z.longitude);
+        if(dist < 300){ // 300 meters
+            inDanger = true;
+            zoneName = z.name;
+        }
+    });
+
+    // CHECK B: User Incident Density (3+ Reports within 500m)
+    if(!inDanger){
+        let nearbyCount = 0;
+        incidentReportsData.forEach(r => {
+            let dist = getDistance(userLat, userLon, r.latitude, r.longitude);
+            if(dist < 500){ // Check 500m radius
+                nearbyCount++;
+            }
+        });
+
+        if(nearbyCount >= 3){
+            inDanger = true;
+            zoneName = `High Risk Area (${nearbyCount} User Reports)`;
+        }
+    }
+
+    if(inDanger){
+        triggerAlert(zoneName);
+    }
+}
+
+function triggerAlert(name){
+    if(alertActive) return; 
+    alertActive = true;
+    document.getElementById("zoneNameDisplay").innerText = name;
+    document.getElementById("dangerOverlay").style.display = "flex";
+    alertSound.loop = true;
+    alertSound.play().catch(e=>{});
+}
+
+window.dismissAlert = function(){
+    document.getElementById("dangerOverlay").style.display = "none";
+    alertSound.pause();
+    alertSound.currentTime = 0;
+    setTimeout(()=>{ alertActive = false; }, 60000); // Snooze 1 min
+}
+
+// Haversine Distance
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; 
+  const φ1 = lat1 * Math.PI/180; 
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+</script>
+
+</body>
+</html>

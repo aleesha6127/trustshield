@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>User Directory — Admin</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* MISSION CONTROL THEME */
+body{ background:#020617; color:#e2e8f0; font-family: 'Inter', sans-serif; padding:20px; }
+
+/* CARDS */
+.card-box { background:#0f172a; border-radius:16px; padding:20px; border:1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+
+/* STATS CARDS */
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 15px; text-align: center; }
+.stat-val { font-size: 24px; font-weight: 800; color: white; }
+.stat-label { font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+
+/* TABLE */
+.table-dark { background: transparent; }
+.table-dark th { background: #1e293b; color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.table-dark td { vertical-align: middle; border-color: #334155; color: #cbd5e1; font-size: 14px; }
+tbody tr { transition: 0.2s; cursor: pointer; }
+tbody tr:hover { background: rgba(59, 130, 246, 0.1); }
+
+/* STATUS BADGES */
+.badge-safe { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-risk { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+/* SEARCH BOX */
+.search-box { background:#1e293b; border:1px solid #334155; color:white; border-radius: 10px; padding: 10px 15px; }
+.search-box:focus { background:#0f172a; border-color: #3b82f6; color: white; box-shadow: none; }
+.search-box::placeholder { color: #64748b; }
+
+/* MODAL */
+.modal-content { background: #0f172a; border: 1px solid #3b82f6; color: white; }
+.modal-header { border-bottom: 1px solid #334155; }
+.modal-footer { border-top: 1px solid #334155; }
+.contact-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #3b82f6; }
+</style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <button onclick="location.href='/admin'" class="btn btn-outline-secondary btn-sm mb-2">⬅ Dashboard</button>
+        <h3 class="fw-bold text-white">👥 User Directory</h3>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-val text-primary">{{ users|length }}</div>
+            <div class="stat-label">Total Registered</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-val text-success">
+                {% set safe_count = namespace(value=0) %}
+                {% for u in users %}{% if u.emergency_contacts|length > 0 %}{% set safe_count.value = safe_count.value + 1 %}{% endif %}{% endfor %}
+                {{ safe_count.value }}
+            </div>
+            <div class="stat-label">Protected Users</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-val text-warning">
+                {{ users|length - safe_count.value }}
+            </div>
+            <div class="stat-label">At Risk (No Contacts)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card-box">
+       <div class="row mb-3">
+         <div class="col-md-6">
+           <input id="search" class="form-control search-box" placeholder="🔎 Search by Name, Email or UID..." onkeyup="searchUser()">
+         </div>
+         <div class="col-md-6 text-end">
+           <span class="text-muted small">Click any user to view profile</span>
+         </div>
+       </div>
+
+       <div class="table-responsive">
+       <table class="table table-dark table-hover mb-0">
+         <thead>
+           <tr>
+             <th>User Identity</th>
+             <th>Email</th>
+             <th>Safety Status</th>
+             <th>Action</th>
+           </tr>
+         </thead>
+         <tbody id="userTable">
+           {% for user in users %}
+           <tr onclick='viewProfile({{ user|tojson }})'>
+             <td>
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center fw-bold text-white me-3" style="width:40px; height:40px; font-size:18px;">
+                        {{ user.name[0] | upper }}
+                    </div>
+                    <div>
+                        <div class="fw-bold text-white">{{ user.name }}</div>
+                        <div class="small text-secondary font-monospace" style="font-size:11px;">{{ user.uid }}</div>
+                    </div>
+                </div>
+             </td>
+             <td>{{ user.email }}</td>
+             <td>
+                {% if user.emergency_contacts|length > 0 %}
+                    <span class="badge badge-safe rounded-pill px-3">
+                        ✓ Protected ({{ user.emergency_contacts|length }} Contacts)
+                    </span>
+                {% else %}
+                    <span class="badge badge-risk rounded-pill px-3">
+                        ⚠ At Risk (No Contacts)
+                    </span>
+                {% endif %}
+             </td>
+             <td>
+                <button class="btn btn-sm btn-outline-light">View Profile ➝</button>
+             </td>
+           </tr>
+           {% endfor %}
+         </tbody>
+       </table>
+       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="profileModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">👤 User Profile</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="text-center mb-4">
+            <div id="mAvatar" class="bg-primary rounded-circle d-flex align-items-center justify-content-center fw-bold text-white mx-auto mb-2" style="width:60px; height:60px; font-size:24px;"></div>
+            <h3 id="mName" class="fw-bold text-white">...</h3>
+            <p id="mEmail" class="text-info mb-1">...</p>
+            <div id="mStatus"></div>
+        </div>
+
+        <h6 class="text-uppercase text-secondary small fw-bold mb-3 mt-4">🚨 Emergency Contacts Network</h6>
+        <div id="mContactsList">
+            </div>
+
+      </div>
+      <div class="modal-footer">
+          <a id="mEmailBtn" href="#" class="btn btn-outline-light w-100">📧 Send Official Mail</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Search Function
+function searchUser(){
+ let input = document.getElementById("search").value.toLowerCase();
+ let rows = document.querySelectorAll("#userTable tr");
+ rows.forEach(r=>{
+   let text = r.innerText.toLowerCase();
+   r.style.display = text.includes(input) ? "" : "none";
+ });
+}
+
+// Modal Logic
+const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+
+function viewProfile(user){
+    // Basic Info
+    document.getElementById("mName").innerText = user.name;
+    document.getElementById("mEmail").innerText = user.email;
+    document.getElementById("mAvatar").innerText = user.name.charAt(0).toUpperCase();
+    document.getElementById("mEmailBtn").href = "mailto:" + user.email;
+
+    // Status Badge
+    const statusDiv = document.getElementById("mStatus");
+    if(user.emergency_contacts && user.emergency_contacts.length > 0){
+        statusDiv.innerHTML = '<span class="badge badge-safe">Account Protected</span>';
+    } else {
+        statusDiv.innerHTML = '<span class="badge badge-risk">Account At Risk</span>';
+    }
+
+    // Contacts List
+    const list = document.getElementById("mContactsList");
+    list.innerHTML = ""; // Clear previous
+
+    if(user.emergency_contacts && user.emergency_contacts.length > 0){
+        user.emergency_contacts.forEach(c => {
+            let html = `
+            <div class="contact-item d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold text-white">${c.name || 'Contact'}</div>
+                    <div class="small text-secondary">${c.relation || 'Relation Unknown'}</div>
+                </div>
+                <div class="text-end">
+                    <div class="text-white font-monospace fs-6">${c.phone}</div>
+                </div>
+            </div>`;
+            list.innerHTML += html;
+        });
+    } else {
+        list.innerHTML = `<div class="p-3 text-center border border-secondary rounded" style="border-style:dashed!important; color:#94a3b8;">
+            No emergency contacts added.<br>
+            <small>User may not receive SOS alerts.</small>
+        </div>`;
+    }
+
+    modal.show();
+}
+</script>
+
+</body>
+</html>

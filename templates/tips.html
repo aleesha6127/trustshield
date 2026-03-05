@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety Tips – TrustShield</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* --- THEME & BACKGROUND --- */
+body {
+  background: #f0f2f5;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  padding-bottom: 80px;
+}
+
+/* --- HEADER --- */
+.header-glass {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+  border-radius: 0 0 30px 30px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(118, 75, 162, 0.3);
+  margin-bottom: -40px;
+}
+
+.tag-cloud {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(5px);
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* --- MAIN CONTAINER --- */
+.main-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+  position: relative;
+  z-index: 10;
+}
+
+/* --- CARDS --- */
+.content-card {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+.quote-box {
+  background: #fff0f6;
+  border-left: 5px solid #ff4d94;
+  padding: 20px;
+  border-radius: 12px;
+  font-style: italic;
+  color: #d6336c;
+  font-weight: 500;
+}
+
+/* --- VIDEO GRID --- */
+.video-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease;
+  height: 100%;
+  border: 1px solid #eee;
+}
+.video-card:hover { transform: translateY(-5px); }
+
+.video-info { padding: 12px; }
+.video-title { font-weight: 700; font-size: 15px; display: block; margin-bottom: 4px; }
+.video-desc { font-size: 12px; color: #666; }
+
+/* --- ACCORDION TIPS --- */
+.accordion-item {
+  border: none;
+  margin-bottom: 10px;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.accordion-button {
+  background: #fff;
+  font-weight: 600;
+  color: #333;
+}
+.accordion-button:not(.collapsed) {
+  background: #eef2ff;
+  color: #4f46e5;
+  box-shadow: none;
+}
+.tip-list { list-style: none; padding: 0; margin: 0; }
+.tip-item {
+  padding: 10px 0;
+  border-bottom: 1px dashed #eee;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.tip-item:last-child { border-bottom: none; }
+
+.icon-check { color: #10b981; font-size: 18px; background: #d1fae5; padding: 5px; border-radius: 50%; min-width: 28px; text-align: center; }
+.icon-cross { color: #ef4444; font-size: 18px; background: #fee2e2; padding: 5px; border-radius: 50%; min-width: 28px; text-align: center; }
+
+/* --- FLOATING BUTTON --- */
+.fab-back {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 50px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+  transition: 0.3s;
+}
+.fab-back:hover { background: #000; transform: translateX(-50%) scale(1.05); color:white; }
+
+@media (max-width: 576px) {
+  .header-glass { padding: 30px 15px 50px; border-radius: 0 0 25px 25px; }
+  .content-card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header-glass">
+  <h2 class="fw-bold mb-1">🛡 TrustShield Academy</h2>
+  <p class="opacity-75 small mb-0">Empower yourself with knowledge</p>
+  
+  <div class="tag-cloud">
+    <span class="tag">🥋 Self Defense</span>
+    <span class="tag">🧠 Awareness</span>
+    <span class="tag">🚓 Legal Rights</span>
+  </div>
+</div>
+
+<div class="main-container">
+
+  <div class="content-card mt-4">
+    <div class="quote-box text-center">
+      “Safety isn't expensive, it's priceless. Preparedness is the ultimate weapon.”
+    </div>
+  </div>
+
+  <h5 class="fw-bold mb-3 ms-2">🎥 Essential Video Training</h5>
+  
+  <div class="row g-3 mb-4">
+    
+    <div class="col-md-6">
+      <div class="video-card">
+        <div class="ratio ratio-16x9">
+          <iframe src="https://www.youtube.com/embed/M4_8PoRQP8w" title="Basic Self Defense" allowfullscreen></iframe>
+        </div>
+        <div class="video-info">
+          <span class="video-title">Basic Self-Defense Moves</span>
+          <span class="video-desc">Simple strikes every woman should know.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="video-card">
+        <div class="ratio ratio-16x9">
+          <iframe src="https://www.youtube.com/embed/KVpxP3ZZtAc" title="Escape Holds" allowfullscreen></iframe>
+        </div>
+        <div class="video-info">
+          <span class="video-title">Escaping Wrist Grabs</span>
+          <span class="video-desc">Techniques to break free instantly.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="video-card">
+        <div class="ratio ratio-16x9">
+          <iframe src="https://www.youtube.com/embed/jRB4nIKLZXI" title="Harassment Defense" allowfullscreen></iframe>
+        </div>
+        <div class="video-info">
+          <span class="video-title">Street Harassment Defense</span>
+          <span class="video-desc">Handling realistic threat scenarios.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="video-card">
+        <div class="ratio ratio-16x9">
+          <iframe src="https://www.youtube.com/embed/DKSo9j-s1LU" title="Knife Awareness" allowfullscreen></iframe>
+        </div>
+        <div class="video-info">
+          <span class="video-title">Knife Threat Awareness</span>
+          <span class="video-desc">Survival mindset and distance management.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h5 class="fw-bold mb-3 ms-2">📚 Safety Guidelines</h5>
+
+  <div class="accordion" id="safetyAccordion">
+    
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#dosCollapse">
+          <span class="text-success me-2">✔</span> The Safety "Do's"
+        </button>
+      </h2>
+      <div id="dosCollapse" class="accordion-collapse collapse show" data-bs-parent="#safetyAccordion">
+        <div class="accordion-body">
+          <ul class="tip-list">
+            <li class="tip-item"><span class="icon-check">✔</span> Trust your instincts—if it feels wrong, leave immediately. </li>
+            <li class="tip-item"><span class="icon-check">✔</span> Share your live location with trusted contacts.</li>
+            <li class="tip-item"><span class="icon-check">✔</span> Carry safety tools (pepper spray, whistle, or alarm). </li>
+            <li class="tip-item"><span class="icon-check">✔</span> Walk with confidence and stay aware of surroundings.</li>
+            <li class="tip-item"><span class="icon-check">✔</span> shout "FIRE" instead of "HELP" to attract more attention.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dontsCollapse">
+          <span class="text-danger me-2">⚠</span> The Critical "Don'ts"
+        </button>
+      </h2>
+      <div id="dontsCollapse" class="accordion-collapse collapse" data-bs-parent="#safetyAccordion">
+        <div class="accordion-body">
+          <ul class="tip-list">
+            <li class="tip-item"><span class="icon-cross">✖</span> Never walk alone in poorly lit or isolated areas.</li>
+            <li class="tip-item"><span class="icon-cross">✖</span> Don't wear both headphones while walking alone.</li>
+            <li class="tip-item"><span class="icon-cross">✖</span> Don't share OTPs or personal details with strangers.</li>
+            <li class="tip-item"><span class="icon-cross">✖</span> Don't argue with an aggressor—prioritize escape.</li>
+            <li class="tip-item"><span class="icon-cross">✖</span> Don't reveal you are home alone to delivery personnel.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#digitalCollapse">
+          <span class="text-primary me-2">🔒</span> Digital Safety
+        </button>
+      </h2>
+      <div id="digitalCollapse" class="accordion-collapse collapse" data-bs-parent="#safetyAccordion">
+        <div class="accordion-body">
+          <ul class="tip-list">
+            <li class="tip-item"><span class="icon-check">🛡</span> Use Two-Factor Authentication (2FA) everywhere.</li>
+            <li class="tip-item"><span class="icon-check">🛡</span> Be careful with geolocation tags on social media photos.</li>
+            <li class="tip-item"><span class="icon-check">🛡</span> Regularly check app permissions for location access.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<a href="/dashboard" class="fab-back">
+  <span>⬅ Dashboard</span>
+</a>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

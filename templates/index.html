@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrustShield – Your Safety Companion</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #e91e63;
+            --secondary: #9c27b0;
+            --gradient: linear-gradient(135deg, #e91e63, #9c27b0);
+            --dark: #1a0e1f;
+            --darker: #0f0a13;
+            --light: #fce4ec;
+            --card-bg: #2d1b35;
+            --text-light: #fce4ec;
+        }
+        
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: var(--darker);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+        
+        /* Background nebula effect */
+        .nebula {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(233, 30, 99, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.15) 0%, transparent 50%);
+            z-index: -2;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, #fff, transparent);
+            background-size: 200px 200px;
+            z-index: -1;
+            opacity: 0.2;
+        }
+        
+        /* Modern navbar */
+        .navbar {
+            background: rgba(26, 14, 31, 0.95); /* Increased opacity for mobile readability */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(233, 30, 99, 0.2);
+            padding: 1rem 0;
+            z-index: 1000;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mobile Menu Toggler Styling */
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.1);
+        }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(233, 30, 99, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* Hero section */
+        .hero {
+            padding: 140px 0 100px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: var(--gradient);
+            color: white;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.3);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(233, 30, 99, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(233, 30, 99, 0); }
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #8da0c7;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* Buttons */
+        .btn-gradient {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.5);
+            color: white;
+        }
+        
+        .btn-outline-light {
+            border: 2px solid rgba(233, 30, 99, 0.4);
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: rgba(233, 30, 99, 0.08);
+            color: var(--text-light);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-outline-light:hover {
+            border-color: var(--primary);
+            background: rgba(233, 30, 99, 0.15);
+            color: white;
+        }
+        
+        /* Stats counter */
+        .stats-section {
+            padding: 60px 0;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            border: 1px solid rgba(233, 30, 99, 0.15);
+            position: relative;
+            overflow: hidden;
+            height: 100%; /* Equal height */
+        }
+        
+        .stat-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: rgba(233, 30, 99, 0.3);
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #8da0c7;
+            font-size: 0.95rem;
+        }
+        
+        /* Features grid */
+        .features-section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title h2 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+        
+        .section-title p {
+            color: #8da0c7;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            height: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(233, 30, 99, 0.15);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: rgba(233, 30, 99, 0.3);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .feature-card h4 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+        
+        .feature-card p {
+            color: #8da0c7;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-link {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .feature-link:hover {
+            color: #90e0ef;
+        }
+        
+        /* CTA section */
+        .cta-section {
+            padding: 80px 0;
+        }
+        
+        .cta-box {
+            background: var(--gradient);
+            border-radius: 30px;
+            padding: 60px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(233, 30, 99, 0.4);
+        }
+        
+        .cta-box:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .cta-box h3 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .cta-box p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .btn-light {
+            background: white;
+            color: var(--dark);
+            border-radius: 50px;
+            padding: 12px 35px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-light:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: #8da0c7;
+            padding: 60px 0 30px;
+            border-top: 1px solid rgba(233, 30, 99, 0.2);
+        }
+        
+        .footer-logo {
+            font-weight: 700;
+            font-size: 1.8rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .footer p {
+            margin-bottom: 2rem;
+            max-width: 300px;
+        }
+        
+        .footer-links h5 {
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-links a {
+            color: #8da0c7;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.8rem;
+            transition: all 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        .copyright {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        /* Glow effects */
+        .glow {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.15) 0%, transparent 70%);
+            filter: blur(60px);
+            z-index: -1;
+        }
+        
+        .glow-1 {
+            top: 20%;
+            left: 10%;
+        }
+        
+        .glow-2 {
+            bottom: 20%;
+            right: 10%;
+            background: radial-gradient(circle, rgba(156, 39, 176, 0.15) 0%, transparent 70%);
+        }
+        
+        /* --- MOBILE SPECIFIC MEDIA QUERIES --- */
+        @media (max-width: 768px) {
+            .navbar-collapse {
+                background: #1a0e1f;
+                padding: 20px;
+                border-radius: 15px;
+                margin-top: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                border: 1px solid rgba(233, 30, 99, 0.3);
+            }
+            
+            .navbar-nav .btn {
+                width: 100%;
+                margin-bottom: 10px;
+                text-align: center;
+                margin-right: 0 !important;
+            }
+
+            .hero {
+                padding: 100px 0 50px;
+            }
+            
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+                padding: 0 10px;
+            }
+
+            /* Stack buttons vertically on mobile */
+            .hero .d-flex-mobile {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .hero .btn-gradient, .hero .btn-outline-light {
+                width: 100%;
+                margin-right: 0 !important;
+            }
+            
+            .cta-box {
+                padding: 40px 20px;
+            }
+            
+            .cta-box h3 {
+                font-size: 1.8rem;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .hero-badge {
+                font-size: 0.8rem;
+                padding: 6px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nebula"></div>
+    <div class="stars"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>TrustShield
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+                <div class="navbar-nav align-items-lg-center">
+                    <a href="/login/admin" class="nav-link text-white-50 me-lg-3 mb-2 mb-lg-0" style="font-size: 0.9rem; text-decoration: none; transition: 0.3s;">
+            <i class="fas fa-user-shield me-1"></i> Admin
+                </a>
+                    <a href="/login" class="btn btn-outline-light me-lg-2 mb-2 mb-lg-0">Login</a>
+                    <a href="/register" class="btn-gradient">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <i class="fas fa-badge-check me-2"></i>Your Safety Companion
+            </div>
+            
+            <h1>Stay Safe with TrustShield</h1>
+            
+            <p class="hero-subtitle">
+                A comprehensive safety platform designed to protect women, children, and travelers during emergencies with instant SOS alerts, live tracking, and rapid assistance.
+            </p>
+            
+            <div class="mt-4 d-flex d-flex-mobile justify-content-center">
+                <a href="/register" class="btn-gradient me-3">
+                    <i class="fas fa-rocket me-2"></i>Get Started Free
+                </a>
+                <a href="#features" class="btn btn-outline-light">
+                    <i class="fas fa-play-circle me-2"></i>See How It Works
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <section class="stats-section">
+        <div class="container">
+            <div class="row g-3 g-md-4">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat1">0</div>
+                        <div class="stat-label">Users Protected</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat2">0</div>
+                        <div class="stat-label">Emergencies Handled</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat3">0</div>
+                        <div class="stat-label">Active Monitoring</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat4">0</div>
+                        <div class="stat-label">Cities Covered</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Comprehensive Features</h2>
+                <p>Everything you need to stay safe, anywhere you go</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h4>One-Click SOS</h4>
+                        <p>Instant emergency alerts with live location sharing to trusted contacts and authorities.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h4>Journey Tracker</h4>
+                        <p>Track your travel route and automatically notify trusted contacts when you arrive safely.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h4>Incident Reports</h4>
+                        <p>Report incidents instantly with photos, audio, and location evidence for proper documentation.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h4>Missing Person Board</h4>
+                        <p>Post and view missing person alerts with community assistance for faster recovery.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h4>Danger Zones</h4>
+                        <p>View unsafe areas and get real-time location-based warnings before you enter.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h4>Health Tracking</h4>
+                        <p>Personalized emergency & health support tools integrated with medical services.</p>
+                        <a href="/login" class="feature-link">
+                            Learn more <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-box">
+                <h3>Your Safety Is Our Priority</h3>
+                <p>Join thousands of users who trust TrustShield every day for their personal safety and peace of mind.</p>
+                <a href="/register" class="btn-light w-100-mobile">
+                    <i class="fas fa-shield-alt me-2"></i>Start Protecting Yourself
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-12 mb-5">
+                    <div class="footer-logo">
+                        <i class="fas fa-shield-alt me-2"></i>TrustShield
+                    </div>
+                    <p>A comprehensive safety platform designed to protect women, children, and travelers during emergencies.</p>
+                </div>
+                
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="footer-links">
+                        <h5>Features</h5>
+                        <a href="#">SOS Alerts</a>
+                        <a href="#">Journey Tracker</a>
+                        <a href="#">Incident Reports</a>
+                        <a href="#">Missing Persons</a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="footer-links">
+                        <h5>Company</h5>
+                        <a href="#">About Us</a>
+                        <a href="#">Contact</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-4 col-12 mb-4">
+                    <div class="footer-links">
+                        <h5>Get Help</h5>
+                        <a href="#">Help Center</a>
+                        <a href="#">FAQs</a>
+                        <a href="#">Safety Tips</a>
+                        <a href="#">Emergency Contacts</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                © 2026 TrustShield — Protecting people everywhere. All rights reserved.
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Animated counters
+        function animateCounter(id, endValue, duration = 2000) {
+            const element = document.getElementById(id);
+            if(!element) return;
+            let startValue = 0;
+            const increment = endValue / (duration / 30);
+            const timer = setInterval(() => {
+                startValue += increment;
+                if (startValue >= endValue) {
+                    element.textContent = endValue.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(startValue).toLocaleString();
+                }
+            }, 30);
+        }
+        
+        // Start counters when page loads
+        window.addEventListener('load', () => {
+            animateCounter('stat1', 12500);
+            animateCounter('stat2', 874);
+            animateCounter('stat3', 245);
+            animateCounter('stat4', 68);
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    e.preventDefault();
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Add subtle parallax effect to nebula
+        window.addEventListener('scroll', () => {
+            const nebula = document.querySelector('.nebula');
+            const stars = document.querySelector('.stars');
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * 0.3;
+            
+            if (nebula) nebula.style.transform = `translateY(${rate}px)`;
+            if (stars) stars.style.transform = `translateY(${rate * 0.5}px)`;
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

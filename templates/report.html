@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Incident – TrustShield</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{ background:#eef4ff; font-family: sans-serif; min-height: 100vh; }
+
+.card-box{ 
+  background:white; border-radius:22px; padding:24px; 
+  box-shadow:0 25px 60px rgba(0,0,0,.10); 
+  margin:auto; 
+  /* RESPONSIVE WIDTHS */
+  width: 100%;
+  max-width:760px; 
+}
+
+.section-title{ font-weight:700; color: #444; margin-bottom: 8px;}
+label { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: #333; }
+
+/* Mobile Tweaks */
+@media (max-width: 576px) {
+  .card-box { padding: 20px 15px; border-radius: 16px; }
+  h3 { font-size: 1.5rem; }
+  /* Make GPS button stack nicely if needed, though input-group handles it well */
+}
+</style>
+</head>
+<body class="p-3 p-md-4">
+
+<div class="container-fluid p-0 mb-3" style="max-width: 760px; margin: auto;">
+    <button onclick="location.href='/dashboard'" class="btn btn-outline-dark btn-sm">⬅ Dashboard</button>
+</div>
+
+<div class="card-box">
+  <h3 class="text-center fw-bold">🛡 Report Incident</h3>
+  <p class="text-center text-muted mb-4 small">Document and report crimes safely</p>
+
+  <form action="/submit_report" method="POST" enctype="multipart/form-data">
+    
+    <p class="section-title">Incident Details</p>
+    
+    <div class="mb-3">
+        <label>Type of Incident *</label>
+        <select name="type" class="form-select" required>
+          <option value="">Select incident type</option>
+          <option>Harassment</option>
+          <option>Stalking</option>
+          <option>Abuse</option>
+          <option>Robbery</option>
+          <option>Other</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Description *</label>
+        <textarea name="description" rows="4" class="form-control" placeholder="Describe what happened..." required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label>Upload Evidence (Optional)</label>
+        <p class="text-muted small mb-1">Image, Video, Audio, or PDF</p>
+        <input type="file" name="evidence" class="form-control" accept="image/*,video/*,audio/*,application/pdf">
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-6">
+        <label>Date *</label>
+        <input type="date" name="date" class="form-control" required>
+      </div>
+      <div class="col-6">
+        <label>Time *</label>
+        <input type="time" name="time" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="mb-4">
+        <label>Location *</label>
+        <div class="input-group">
+            <input name="location" id="location" class="form-control" placeholder="Enter location or use GPS" required>
+            <button type="button" onclick="getGPS()" class="btn btn-secondary">📍 GPS</button>
+        </div>
+    </div>
+
+    <hr>
+    <p class="section-title">Privacy</p>
+    <div class="form-check form-switch p-2 border rounded bg-light">
+      <input class="form-check-input ms-0 me-2" type="checkbox" name="anonymous" style="float:none;">
+      <label class="form-check-label" style="vertical-align: middle;">Submit without revealing identity</label>
+    </div>
+
+    <hr class="mt-4">
+    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm">📨 Submit Report</button>
+  </form>
+</div>
+
+<script>
+function getGPS(){
+ if(!navigator.geolocation){
+     alert("Geolocation is not supported by your browser");
+     return;
+ }
+ navigator.geolocation.getCurrentPosition((p)=>{
+  document.getElementById("location").value = p.coords.latitude.toFixed(5)+", "+p.coords.longitude.toFixed(5);
+ }, (err)=>{
+    alert("Could not fetch GPS. Ensure location is enabled on your device.");
+ });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SOS Monitor — Admin Mission Control</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* MISSION CONTROL THEME */
+body{ background:#020617; color:#e2e8f0; font-family: 'Inter', sans-serif; padding:20px; }
+
+/* MAP */
+#sosMap { 
+    height: 400px; width: 100%; 
+    border-radius: 16px; 
+    border: 2px solid #dc2626; /* Red border for urgency */
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.2);
+}
+
+/* CARDS */
+.card-box { background:#0f172a; border-radius:16px; padding:20px; border:1px solid #1e293b; }
+.card-header { font-size: 18px; font-weight: 700; color: #f87171; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* TABLE */
+.table-dark { background: transparent; }
+.table-dark th { background: #1e293b; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
+.table-dark td { vertical-align: middle; border-color: #334155; color: #cbd5e1; }
+tbody tr { transition: 0.2s; cursor: pointer; }
+tbody tr:hover { background: rgba(220, 38, 38, 0.1); } /* Red hover effect */
+
+/* PULSING MARKER CSS */
+.pulse-icon {
+    background: rgba(220, 38, 38, 0.6);
+    border-radius: 50%;
+    height: 20px; width: 20px;
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 1);
+    animation: pulse-red 1.5s infinite;
+}
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* MODAL */
+.modal-content { background: #0f172a; border: 1px solid #dc2626; color: white; }
+.modal-header { border-bottom: 1px solid #334155; }
+.data-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: bold; }
+.data-value { font-size: 16px; margin-bottom: 15px; display: block; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <button onclick="location.href='/admin'" class="btn btn-outline-secondary btn-sm mb-2">⬅ Dashboard</button>
+        <h3 class="fw-bold text-danger">🚨 SOS LIVE MONITOR</h3>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-danger fs-6">{{ alerts|length }} Active Alerts</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card-box p-0">
+             <div id="sosMap"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div class="card-box">
+            <div class="card-header">Incoming Distress Signals</div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>User UID</th>
+                    <th>Coordinates</th>
+                    <th>Time Recieved</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for alert in alerts %}
+                  <tr onclick='analyzeAlert({{ alert|tojson }})'>
+                    <td class="fw-bold text-white">{{ alert.uid }}</td>
+                    <td class="font-monospace text-warning">
+                        {{ alert.lat|default(0)|round(4) }}, {{ alert.lon|default(0)|round(4) }}
+                    </td>
+                    <td>{{ alert.time_str }}</td>
+                    <td><span class="badge bg-danger spinner-grow-sm">ACTIVE</span></td>
+                    <td><button class="btn btn-sm btn-outline-light">Track 🎯</button></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sosModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold text-danger">⚡ TACTICAL ANALYSIS</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="row">
+            <div class="col-6">
+                <span class="data-label">User Identity (UID)</span>
+                <span class="data-value" id="modalUID">Loading...</span>
+            </div>
+            <div class="col-6">
+                <span class="data-label">Status</span>
+                <span class="badge bg-danger">CRITICAL</span>
+            </div>
+        </div>
+
+        <span class="data-label">GPS Coordinates</span>
+        <span class="data-value text-warning" id="modalCoords">0.0000, 0.0000</span>
+
+        <span class="data-label">Time Elapsed</span>
+        <span class="data-value text-info" id="modalTime">Just now</span>
+
+        <hr class="border-secondary">
+        
+        <div class="d-grid gap-2">
+            <a id="btnOSM" href="#" target="_blank" class="btn btn-light fw-bold">📍 Open in OpenStreetMap</a>
+            <a href="tel:112" class="btn btn-danger fw-bold">🚓 Dial Emergency (112)</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// 1. INITIALIZE MAP
+var map = L.map('sosMap').setView([10.8505, 76.2711], 7); 
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+    attribution: '© OpenStreetMap',
+    className: 'map-tiles'
+}).addTo(map);
+
+// 2. CUSTOM PULSING ICON
+var sosIcon = L.divIcon({
+    className: 'pulse-icon',
+    iconSize: [20, 20]
+});
+
+// 3. LOAD DATA
+const alerts = {{ alerts | tojson }};
+const modal = new bootstrap.Modal(document.getElementById('sosModal'));
+
+// 4. PLOT ALERTS
+alerts.forEach(a => {
+    // Check for 'lat' and 'lon' (Database keys)
+    if(a.lat && a.lon){
+        L.marker([a.lat, a.lon], {icon: sosIcon})
+         .addTo(map)
+         .bindPopup(`<b style="color:red">SOS ACTIVE</b><br>UID: ${a.uid}<br>${a.time_str}`)
+         .openPopup();
+    }
+});
+
+// 5. ANALYSIS FUNCTION
+function analyzeAlert(data){
+    // Fill Modal Data
+    document.getElementById("modalUID").innerText = data.uid;
+    
+    // Safety check for lat/lon
+    let lat = data.lat || 0;
+    let lon = data.lon || 0;
+
+    document.getElementById("modalCoords").innerText = `${lat}, ${lon}`;
+    document.getElementById("modalTime").innerText = data.time_str + " (Recorded)";
+
+    // --- FIX: GENERATE OPENSTREETMAP LINK ---
+    let osmLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=18/${lat}/${lon}`;
+    document.getElementById("btnOSM").href = osmLink;
+
+    // Show Modal
+    modal.show();
+
+    // Fly to Location on Map
+    if(lat && lon) {
+        map.flyTo([lat, lon], 15, {
+            animate: true,
+            duration: 1.5
+        });
+    }
+}
+</script>
+
+</body>
+</html>

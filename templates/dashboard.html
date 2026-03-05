@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustShield — Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* --- ANIMATED BACKGROUND --- */
+body { 
+  margin: 0; 
+  font-family: 'Inter', sans-serif; 
+  background: linear-gradient(-45deg, #e0e7ff, #fee2e2, #dcfce7, #f3e8ff); 
+  background-size: 400% 400%; 
+  animation: gradientBG 15s ease infinite; 
+  min-height: 100vh; 
+  overflow-x: hidden;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- GLASSMORPHISM TOPBAR --- */
+.topbar { 
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  height: 60px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  padding: 0 20px; 
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  position: fixed; 
+  top: 0; 
+  width: 100%; 
+  z-index: 1000;
+}
+
+/* --- MODERN SIDEBAR --- */
+.sidebar { 
+  width: 260px; 
+  height: calc(100vh - 60px); 
+  background: #0f172a; /* Slate 900 */
+  color: white; 
+  position: fixed; 
+  top: 60px; 
+  left: -260px;
+  padding: 20px; 
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+  z-index: 999; 
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.menu-item { 
+  padding: 12px 15px; 
+  border-radius: 12px; 
+  margin-bottom: 8px; 
+  cursor: pointer; 
+  font-size: 15px; 
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex; align-items: center; gap: 12px; color: #cbd5e1;
+}
+
+.menu-item:hover { 
+  background: rgba(255, 255, 255, 0.1); 
+  color: white;
+  transform: translateX(5px);
+}
+
+.active { 
+  background: linear-gradient(90deg, #2563eb, #3b82f6); 
+  color: white; 
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+}
+
+/* --- MAIN CONTENT AREA --- */
+.main { 
+  margin-left: 0; 
+  margin-top: 60px; 
+  padding: 40px 30px; 
+  text-align: center; 
+  transition: 0.3s;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* --- SOS BUTTON --- */
+.sos-container { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+.sos-btn { 
+  width: 100%; height: 100%; border-radius: 50%; border: none; 
+  background: radial-gradient(circle at 30% 30%, #ff5252, #d50000); 
+  color: white; font-size: 42px; font-weight: 900; 
+  box-shadow: 0 10px 30px rgba(213, 0, 0, 0.5), inset 0 5px 15px rgba(255,255,255,0.3);
+  position: relative; z-index: 2; cursor: pointer; transition: transform 0.2s;
+}
+.sos-btn:active { transform: scale(0.95); }
+.sos-container::before, .sos-container::after {
+  content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 100%; height: 100%; border-radius: 50%; border: 2px solid #ff5252;
+  animation: ripple 2s infinite; z-index: 1;
+}
+.sos-container::after { animation-delay: 1s; }
+@keyframes ripple { 0% { width: 100%; height: 100%; opacity: 1; border-width: 2px; } 100% { width: 180%; height: 180%; opacity: 0; border-width: 0px; } }
+
+/* --- QUICK ACTION CARDS --- */
+.quick-box { 
+  background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
+  padding: 20px 15px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; 
+  transition: all 0.3s; text-align: center; font-size: 14px; 
+  height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.quick-box:hover { transform: translateY(-8px) scale(1.02); background: white; }
+.quick-box div { font-size: 28px; margin-bottom: 8px; }
+
+/* --- OVERLAY & POPUP --- */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.85); backdrop-filter:blur(5px); display:none; justify-content:center; align-items:center; z-index:9999; }
+.popup { width:90%; max-width:360px; background:white; padding:30px; border-radius:24px; text-align:center; }
+
+/* 🚨 DANGER ZONE ALERT OVERLAY 🚨 */
+#dangerOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(220, 38, 38, 0.95);
+    z-index: 10000; flex-direction: column; align-items: center; justify-content: center;
+    color: white; text-align: center; animation: flash 1s infinite;
+}
+@keyframes flash { 0%{opacity:1;} 50%{opacity:0.8;} 100%{opacity:1;} }
+
+/* MENU TOGGLE */
+.menu-toggle { 
+  display: block; 
+  font-size: 24px; 
+  cursor: pointer; 
+  background: rgba(37, 99, 235, 0.1); 
+  border: 1px solid rgba(37, 99, 235, 0.3); 
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-right: 15px; 
+  color: #2563eb;
+  transition: all 0.3s;
+}
+
+.menu-toggle:hover {
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.mobile-overlay { 
+  display: none; 
+  position: fixed; 
+  top: 60px; 
+  left: 0; 
+  width: 100%; 
+  height: calc(100vh - 60px); 
+  background: rgba(0,0,0,0.5); 
+  z-index: 998; 
+  backdrop-filter: blur(3px); 
+}
+
+.mobile-overlay.show {
+  display: block;
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  .main { margin-left: 0; padding: 20px 15px; }
+  .sos-container { width: 160px; height: 160px; }
+  .sos-btn { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<div id="dangerOverlay">
+    <h1 style="font-size: 80px;">⚠</h1>
+    <h2 class="fw-bold">WARNING!</h2>
+    <p class="fs-5">You have entered a High Risk Zone</p>
+    <h3 id="zoneNameDisplay" class="bg-white text-danger px-4 py-1 rounded-pill mt-2">...</h3>
+    <button onclick="dismissDangerAlert()" class="btn btn-light fw-bold rounded-pill px-5 py-3 mt-4 text-danger shadow-lg">I AM SAFE</button>
+</div>
+
+<div class="mobile-overlay" id="mobOverlay" onclick="toggleMenu()"></div>
+
+<div class="topbar">
+  <div class="d-flex align-items-center">
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <b style="font-size: 20px;">🛡 TrustShield</b>
+  </div>
+  <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">Logout</a>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <div class="menu-item active"><span>🏠</span> Dashboard</div>
+  <div class="menu-item" onclick="window.location='/journey'"><span>🧭</span> Journey Tracker</div>
+  <div class="menu-item" onclick="window.location='/report'"><span>📝</span> Report Incident</div>
+  <div class="menu-item" onclick="window.location='/emergency_contacts'"><span>📞</span> Contacts</div>
+  <div class="menu-item" onclick="window.location='/danger_zone'"><span>📍</span> Danger Zones</div>
+  <div class="menu-item" onclick="window.location='/health_tracker'"><span>🩺</span> Health Tracker</div>
+  <div class="menu-item" onclick="window.location='/police_complaint'"><span>👮</span> Police Complaints</div>
+  <div class="menu-item" onclick="window.location='/tips'"><span>📚</span> Safety Tips</div>
+  <div class="menu-item" onclick="window.location='/travel_safety'"><span>✈</span> Travel Safety</div>
+  <div class="menu-item" onclick="window.location='/missing_persons'"><span>📢</span> Missing Persons</div>
+</div>
+
+<div class="main">
+  <div style="width: 100%; max-width: 900px;">
+    <h2 class="fw-bold text-dark">Welcome back, {{ user_name }}</h2>
+    <p class="text-muted small mb-4">{{ user_email }} • <span class="text-success fw-bold">● Protected</span></p>
+
+    <div class="py-4">
+      <div class="sos-container">
+        <button class="sos-btn" onclick="triggerSOS()">SOS</button>
+      </div>
+    </div>
+    
+    <p class="text-secondary mb-4">Tap SOS to alert your trusted contacts instantly</p>
+    <hr class="opacity-25">
+
+    <h5 class="fw-bold text-dark mb-4 text-center">⚡ Quick Safety Actions</h5>
+    
+    <div class="row mt-3 g-3 justify-content-center" style="max-width: 800px; margin: 0 auto;">
+    <div class="col-6 col-md-3 col-lg-2" onclick="window.location='/journey'">
+      <div class="quick-box"><div>🧭</div><b>Start Journey</b></div>
+    </div>
+    
+    <div class="col-6 col-md-3 col-lg-2" onclick="callPolice()">
+      <div class="quick-box"><div>🚓</div><b>Police 112</b></div>
+    </div>
+    
+    <div class="col-6 col-md-3 col-lg-2" onclick="toggleRecording()">
+      <div class="quick-box" id="recordBox">
+          <div>🎙️</div>
+          <b>Record Audio</b>
+      </div>
+    </div>
+    
+    <div class="col-6 col-md-3 col-lg-2" onclick="shareLocation()">
+      <div class="quick-box"><div>📍</div><b>Share Location</b></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div id="sosOverlay" class="overlay">
+ <div class="popup">
+   <div class="spinner-grow text-danger mb-3" role="status"></div>
+   <h4 class="fw-bold">Sending SOS Alert…</h4>
+   <h1 id="sosTimer" class="display-1 fw-bold text-danger my-2">5</h1>
+   <p id="sosStatus" class="text-muted">Preparing alert system...</p>
+   <p id="sosLoc" class="small fw-bold"></p>
+   <button class="btn btn-light border w-100 rounded-pill py-2 mt-2 fw-bold" onclick="cancelSOS()">Cancel Alert</button>
+ </div>
+</div>
+
+<audio id="alertSound" loop>
+  <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3">
+</audio>
+
+<script>
+// --- MOBILE MENU TOGGLE ---
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("mobOverlay").classList.toggle("show");
+}
+
+// --- BACKGROUND DANGER MONITORING ---
+const alertSound = document.getElementById("alertSound");
+let alertActive = false;
+
+(function startBackgroundMonitor(){
+    if(!navigator.geolocation) return;
+
+    let dangerZones = [];
+    
+    // 1. Fetch Zones (Updated to handle object response)
+    fetch("/danger_data")
+      .then(r=>r.json())
+      .then(data => { 
+          // FIX: API returns {zones:[], reports:[]}
+          dangerZones = data.zones || []; 
+      })
+      .catch(e => console.log("Failed to load danger zones"));
+
+    // 2. Watch Position
+    navigator.geolocation.watchPosition((pos)=>{
+        if(dangerZones.length === 0) return;
+
+        let lat = pos.coords.latitude;
+        let lon = pos.coords.longitude;
+        let inDanger = false;
+        let zoneName = "";
+
+        dangerZones.forEach(z => {
+            let dist = getDistance(lat, lon, z.latitude, z.longitude);
+            if(dist < 300){ // 300m radius
+                inDanger = true;
+                zoneName = z.name;
+            }
+        });
+
+        if(inDanger) {
+            triggerDangerAlert(zoneName);
+        }
+
+    }, null, {enableHighAccuracy: true});
+})();
+
+function triggerDangerAlert(name){
+    if(alertActive) return; // Don't trigger if already active
+    alertActive = true;
+    
+    document.getElementById("zoneNameDisplay").innerText = name;
+    document.getElementById("dangerOverlay").style.display = "flex";
+    
+    alertSound.currentTime = 0;
+    alertSound.play().catch(e=>console.log("Audio permission needed"));
+}
+
+window.dismissDangerAlert = function(){
+    document.getElementById("dangerOverlay").style.display = "none";
+    alertSound.pause();
+    // Snooze for 1 minute
+    setTimeout(()=>{ alertActive = false; }, 60000);
+}
+
+// Helper: Haversine Distance
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; 
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// --- NEW FEATURE: EVIDENCE RECORDING (Replaces Siren) ---
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecording() {
+    const box = document.getElementById("recordBox");
+    const icon = box.querySelector("div");
+    const label = box.querySelector("b");
+
+    if (!isRecording) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Audio recording is not supported on this browser.");
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const a = document.createElement('a');
+                a.href = audioUrl;
+                a.download = `Evidence_${new Date().getTime()}.wav`;
+                a.click();
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            
+            // Visual Feedback
+            box.style.background = "#fee2e2"; // Reddish tint
+            box.style.borderColor = "red";
+            icon.innerText = "⏹";
+            label.innerText = "Stop & Save";
+            
+        } catch (err) {
+            console.error(err);
+            alert("Microphone access denied or not available.");
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        
+        // Reset Visuals
+        box.style.background = "rgba(255, 255, 255, 0.7)";
+        box.style.borderColor = "rgba(255, 255, 255, 0.6)";
+        icon.innerText = "🎙️";
+        label.innerText = "Record Audio";
+    }
+}
+
+// --- EXISTING CLIENT SIDE JS ---
+let cancelled=false;
+
+function triggerSOS(){
+ cancelled=false;
+ const overlay=document.getElementById("sosOverlay");
+ const timer=document.getElementById("sosTimer");
+ const status=document.getElementById("sosStatus");
+
+ overlay.style.display="flex";
+ let sec=5; timer.innerText=sec;
+
+ let t=setInterval(()=>{
+   if(cancelled){clearInterval(t);return;}
+   sec--; timer.innerText=sec;
+
+   if(sec===0){
+     clearInterval(t);
+     status.innerHTML="📡 Sending Alert…";
+     sendSOS();
+   }
+ },1000);
+}
+
+function cancelSOS(){
+ cancelled=true;
+ document.getElementById("sosOverlay").style.display="none";
+}
+
+async function sendSOS(){
+ navigator.geolocation.getCurrentPosition(async(pos)=>{
+   const lat=pos.coords.latitude;
+   const lon=pos.coords.longitude;
+   document.getElementById("sosLoc").innerHTML=`📍 ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+
+   await fetch("/send_sos",{
+     method:"POST",
+     headers:{ "Content-Type":"application/json"},
+     body:JSON.stringify({lat:lat,lon:lon})
+   });
+
+   alert("🚨 SOS Alert Sent to Emergency Contacts");
+   document.getElementById("sosOverlay").style.display="none";
+ });
+}
+
+function callPolice(){ window.location.href="tel:112"; }
+
+function shareLocation(){
+ navigator.geolocation.getCurrentPosition((pos)=>{
+   const url=`https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+   window.open("https://wa.me/?text=My%20live%20location:%20"+url);
+ });
+}
+</script>
+
+</body>
+</html>

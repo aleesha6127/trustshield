@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Incident Analysis — Admin</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* DARK THEME */
+body{ background:#0f172a; color:#e2e8f0; font-family: 'Inter', sans-serif; padding:20px; }
+
+/* MAP CONTAINER */
+#crimeMap { 
+    height: 350px; width: 100%; 
+    border-radius: 16px; 
+    border: 1px solid #334155; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* CARDS */
+.card-box { background:#1e293b; border-radius:16px; padding:20px; border:1px solid #334155; }
+.card-header { font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px; }
+
+/* TABLE */
+.table-dark { background: transparent; }
+.table-dark th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+.table-dark td { vertical-align: middle; border-color: #334155; color: #cbd5e1; }
+.btn-view { background: #3b82f6; border: none; padding: 5px 12px; font-size: 13px; border-radius: 6px; color: white; transition: 0.2s; }
+.btn-view:hover { background: #2563eb; transform: translateY(-1px); }
+
+/* MODAL (CASE FILE) */
+.modal-content { background: #1e293b; color: white; border: 1px solid #475569; }
+.modal-header { border-bottom: 1px solid #334155; }
+.modal-footer { border-top: 1px solid #334155; }
+.evidence-box { 
+    background: #0f172a; border-radius: 12px; padding: 15px; 
+    text-align: center; border: 1px dashed #475569; margin-top: 10px; 
+}
+.evidence-img { max-width: 100%; max-height: 300px; border-radius: 8px; }
+.label-text { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; }
+.data-text { font-size: 15px; color: white; margin-bottom: 15px; display: block; }
+</style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <button onclick="location.href='/admin'" class="btn btn-outline-secondary btn-sm mb-2">⬅ Back</button>
+        <h3 class="fw-bold text-white">🕵️‍♂️ Incident Analysis Center</h3>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-danger">{{ reports|length }} Total Reports</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card-box p-0">
+             <div id="crimeMap"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div class="card-box">
+            <div class="card-header">Recent Incident Reports</div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Details Preview</th>
+                    <th>Evidence</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in reports %}
+                  <tr onclick='openCaseModal({{ r|tojson }})' style="cursor:pointer">
+                    <td>{{ r.time_str.split(' ')[0] }}</td>
+                    <td>
+                        <span class="badge bg-warning text-dark">{{ r.incident_type }}</span>
+                    </td>
+                    <td class="text-truncate" style="max-width: 250px;">
+                        {{ r.details }}
+                    </td>
+                    <td>
+                        {% if r.evidence %}
+                            <span class="badge bg-info">📎 Attached</span>
+                        {% else %}
+                            <span class="text-muted small">None</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-secondary">Pending Review</span></td>
+                    <td>
+                        <button class="btn-view">Analyze ➝</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="caseModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">📂 Case File #<span id="caseID"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="row">
+            <div class="col-md-7 border-end border-secondary">
+                <span class="label-text">Incident Type</span>
+                <span class="data-text" id="caseType"></span>
+
+                <span class="label-text">Date & Time</span>
+                <span class="data-text" id="caseTime"></span>
+
+                <span class="label-text">Location</span>
+                <span class="data-text" id="caseLoc"></span>
+
+                <span class="label-text">Full Description</span>
+                <div class="p-3 bg-dark rounded mb-3 text-light" id="caseDesc" style="min-height:80px; font-size:14px;"></div>
+                
+                <span class="label-text">Reporter Identity</span>
+                <span class="data-text" id="caseUser"></span>
+            </div>
+
+            <div class="col-md-5">
+                <span class="label-text">📸 Evidence Analysis</span>
+                <div class="evidence-box" id="evidenceContainer">
+                    <p class="text-muted small">No evidence attached.</p>
+                </div>
+                
+                <hr class="border-secondary">
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-light btn-sm" onclick="locateOnMap()">📍 Locate on Map</button>
+                    <a href="tel:100" class="btn btn-outline-danger btn-sm">📞 Call Police Control</a>
+                </div>
+            </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Mark as Reviewed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// 1. INITIALIZE MAP
+var map = L.map('crimeMap').setView([10.8505, 76.2711], 7); 
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+// Custom Icons
+var crimeIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/564/564619.png', // Warning Icon
+    iconSize: [24, 24]
+});
+
+// 2. LOAD DATA FROM PYTHON
+const reports = {{ reports | tojson }};
+const modal = new bootstrap.Modal(document.getElementById('caseModal'));
+let currentLat = null, currentLon = null;
+
+// 3. PLOT MARKERS
+reports.forEach(r => {
+    if(r.lat && r.lon){
+        L.marker([r.lat, r.lon], {icon: crimeIcon})
+         .addTo(map)
+         .bindPopup(`<b>${r.incident_type}</b><br>${r.time_str}<br><button class='btn btn-xs btn-primary mt-1' onclick='openCaseByID("${r.id}")'>View Case</button>`);
+    }
+});
+
+// 4. OPEN CASE LOGIC
+function openCaseModal(data){
+    document.getElementById("caseID").innerText = data.id.substr(0,8);
+    document.getElementById("caseType").innerText = data.incident_type;
+    document.getElementById("caseTime").innerText = data.time_str;
+    document.getElementById("caseLoc").innerText = data.location || "Unknown";
+    document.getElementById("caseDesc").innerText = data.details || "No description provided.";
+    
+    // User Info
+    if(data.anonymous){
+        document.getElementById("caseUser").innerHTML = "<span class='badge bg-warning text-dark'>Anonymous</span>";
+    } else {
+        document.getElementById("caseUser").innerText = "User ID: " + data.uid;
+    }
+
+    // Evidence Logic
+    const evBox = document.getElementById("evidenceContainer");
+    evBox.innerHTML = "";
+    
+    if(data.evidence){
+        let ext = data.evidence.split('.').pop().toLowerCase();
+        let path = "/static/" + data.evidence; // Correct path mapping
+
+        if(['jpg','jpeg','png','gif'].includes(ext)){
+            evBox.innerHTML = `<img src="${path}" class="evidence-img" onclick="window.open('${path}')" style="cursor:zoom-in">`;
+        } else if(['mp4','webm'].includes(ext)){
+            evBox.innerHTML = `<video src="${path}" controls class="evidence-img"></video>`;
+        } else {
+            evBox.innerHTML = `<a href="${path}" target="_blank" class="btn btn-light btn-sm">📄 Download File (${ext})</a>`;
+        }
+    } else {
+        evBox.innerHTML = `<p class="text-muted small mt-2">No evidence uploaded</p>`;
+    }
+
+    // Store Lat/Lon for button
+    currentLat = data.lat;
+    currentLon = data.lon;
+
+    modal.show();
+}
+
+function openCaseByID(id){
+    let report = reports.find(r => r.id === id);
+    if(report) openCaseModal(report);
+}
+
+function locateOnMap(){
+    if(currentLat && currentLon){
+        modal.hide();
+        map.flyTo([currentLat, currentLon], 15);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        alert("No GPS coordinates available for this report.");
+    }
+}
+</script>
+
+</body>
+</html>

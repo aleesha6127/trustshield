@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Police Complaint — TrustShield</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body{ background:linear-gradient(135deg,#e8efff,#f7faff); font-family: Inter, Arial; min-height: 100vh; }
+
+.card-box{ 
+    width: 100%;
+    max-width: 780px; 
+    margin: 20px auto; 
+    background:white; 
+    border-radius:22px; 
+    box-shadow:0 25px 60px rgba(0,0,0,.12); 
+}
+
+/* iOS Zoom Fix: Inputs must be at least 16px */
+input, textarea, select { 
+    border-radius:12px !important; 
+    font-size: 16px !important; 
+}
+
+h6 { font-weight: 700; color: #444; margin-top: 15px; }
+
+/* Mobile Specific Adjustments */
+@media (max-width: 576px) {
+    .card-box { padding: 20px; border-radius: 16px; margin: 10px auto; }
+    h3 { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body class="p-3 p-md-4">
+
+<div class="container p-0">
+    <button onclick="location.href='/dashboard'" class="btn btn-outline-dark btn-sm mb-2">⬅ Dashboard</button>
+</div>
+
+<div class="card-box p-4">
+
+<h3 class="fw-bold">🏛 Police Complaint / FIR</h3>
+<p class="text-muted mb-2 small">File a formal FIR complaint and download PDF</p>
+<hr>
+
+<form id="firForm" onsubmit="event.preventDefault(); generateFIR();">
+    <h6>Police Station Details</h6>
+    <div class="row g-2">
+        <div class="col-12 col-md-6">
+            <input id="station" class="form-control" placeholder="Police Station Name *" required>
+        </div>
+        <div class="col-12 col-md-6">
+            <input id="district" class="form-control" placeholder="District *" required>
+        </div>
+    </div>
+    
+    <hr class="my-3">
+
+    <div class="d-flex justify-content-between align-items-center">
+        <h6 class="m-0">Complainant Details</h6>
+        <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input" id="anon">
+            <label class="small">Anonymous</label>
+        </div>
+    </div>
+
+    <input id="name" class="form-control mt-2" placeholder="Your full name">
+    <input id="address" class="form-control mt-2" placeholder="Address">
+    <input id="phone" type="tel" class="form-control mt-2" placeholder="Phone number">
+    
+    <hr class="my-3">
+
+    <h6>Incident Details</h6>
+    <select id="incident" class="form-control" required>
+        <option value="">Select incident type</option>
+        <option>Harassment</option>
+        <option>Domestic Violence</option>
+        <option>Stalking</option>
+        <option>Cyber Crime</option>
+        <option>Other</option>
+    </select>
+    
+    <textarea id="details" class="form-control mt-2" rows="5" placeholder="Explain in detail *" required></textarea>
+    
+    <div class="row g-2 mt-1">
+        <div class="col-6">
+            <label class="small text-muted">Date</label>
+            <input type="date" id="date" class="form-control" required>
+        </div>
+        <div class="col-6">
+            <label class="small text-muted">Place</label>
+            <input id="place" class="form-control" placeholder="Location *" required>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-danger mt-4 w-100 py-3 fw-bold shadow-sm">
+        ⬇ Generate FIR PDF
+    </button>
+</form>
+<p class="text-success mt-3 text-center fw-bold" id="msg"></p>
+
+</div>
+
+<script>
+async function generateFIR(){
+    const anon = document.getElementById("anon").checked;
+    const firNo = "FIR-"+Math.floor(100000+Math.random()*900000);
+    const btn = document.querySelector("button[type='submit']");
+    
+    // UI Feedback
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+
+    // 1. Prepare Data
+    const firData = {
+        fir_number: firNo,
+        station: document.getElementById("station").value,
+        district: document.getElementById("district").value,
+        incident_type: document.getElementById("incident").value,
+        incident_details: document.getElementById("details").value,
+        date: document.getElementById("date").value,
+        place: document.getElementById("place").value,
+        complainant_name: anon ? "Anonymous" : document.getElementById("name").value,
+        complainant_address: anon ? "-" : document.getElementById("address").value,
+        complainant_phone: anon ? "-" : document.getElementById("phone").value
+    };
+
+    // 2. SAVE TO PYTHON (Server Side)
+    try {
+        await fetch("/save_complaint_api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(firData)
+        });
+
+        // 3. GENERATE PDF (Client Side for speed)
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(16);
+        doc.text("POLICE – FIRST INFORMATION REPORT (FIR)", 20, 20);
+        doc.setFontSize(12);
+        doc.text("FIR No: " + firNo, 20, 30);
+        doc.text("Station: " + firData.station + ", " + firData.district, 20, 40);
+        
+        // Wrap text to fit PDF width
+        const splitText = doc.splitTextToSize(firData.incident_details, 170);
+
+        doc.text(`Incident: ${firData.incident_type}`, 20, 55);
+        doc.text(`Date: ${firData.date}   Place: ${firData.place}`, 20, 65);
+        
+        doc.text("Details:", 20, 80);
+        doc.text(splitText, 20, 90);
+        
+        // Calculate Y position based on length of details
+        let finalY = 90 + (splitText.length * 7);
+        
+        doc.text("Complainant:", 20, finalY + 10);
+        doc.text(firData.complainant_name, 20, finalY + 20);
+        doc.text(firData.complainant_phone, 20, finalY + 30);
+        
+        doc.save("FIR_" + firNo + ".pdf");
+        
+        document.getElementById("msg").innerText = "✔ Saved & PDF Downloaded!";
+    } catch(err) {
+        alert("Error saving report. Please check connection.");
+    }
+
+    btn.disabled = false;
+    btn.innerText = "⬇ Generate FIR PDF";
+}
+</script>
+
+</body>
+</html>

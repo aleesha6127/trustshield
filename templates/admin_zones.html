@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin — Danger Zones</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* DARK THEME STYLING */
+body{ background:#020617; color:white; font-family:Poppins, Arial; padding:20px; }
+.card-box{ background:#030b1f; border-radius:18px; padding:20px; box-shadow:0 25px 60px rgba(0,0,0,.6); }
+input, select{ background:#020617!important; color:white!important; border:1px solid #1f2937!important; }
+input::placeholder{ color:#9ca3af!important; } /* Lighter placeholder */
+
+/* Table Styling */
+table{ color:white; } 
+thead{ background:#0f172a; }
+tbody tr{ transition: background 0.2s; cursor: pointer; }
+tbody tr:nth-child(even){ background:#020617; } 
+tbody tr:nth-child(odd){ background:#020111; }
+tbody tr:hover{ background: #1e293b; } /* Highlight on hover */
+
+/* Map Height */
+#adminMap { height: 300px; width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid #333; }
+
+/* Fix "Dark Fonts" - Custom light gray for small text */
+.text-light-gray { color: #cbd5e1; } 
+</style>
+</head>
+
+<body>
+<button onclick="location.href='/admin'" class="btn btn-outline-light mb-3">⬅ Back</button>
+<h3>📍 Manage Danger Zones</h3>
+
+<div class="row">
+  <div class="col-md-5">
+    <div class="card-box">
+      <h5>Add New Zone</h5>
+      
+      <div class="input-group mb-2">
+        <input id="searchBox" class="form-control" placeholder="Search location (e.g. MG Road, Kochi)">
+        <button class="btn btn-primary" onclick="searchLocation()">🔍 Search</button>
+      </div>
+      <p class="text-light-gray small">Or click on the map manually to spot</p>
+      
+      <div id="adminMap"></div>
+
+      <form action="/add_zone" method="POST" class="mt-3">
+        <label>Zone Name</label>
+        <input id="zoneName" name="name" class="form-control mb-2" placeholder="e.g. Central Park North" required>
+        
+        <label>Category</label>
+        <input name="category" class="form-control mb-2" placeholder="e.g. Theft, Harassment" required>
+        
+        <label>Active Duration (Hours)</label>
+        <input type="number" name="duration" class="form-control mb-2" value="24" min="1" required>
+        <p class="text-light-gray small" style="font-size:11px;">Zone will auto-expire after this time</p>
+
+        <label>Risk Level</label>
+        <select name="risk" class="form-control mb-2">
+            <option>High</option>
+            <option>Moderate</option>
+            <option>Low</option>
+        </select>
+
+        <div class="row">
+          <div class="col-6">
+            <input id="lat" name="latitude" class="form-control" placeholder="Lat" readonly required>
+          </div>
+          <div class="col-6">
+            <input id="lon" name="longitude" class="form-control" placeholder="Lon" readonly required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 mt-3">➕ Add Zone</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card-box">
+      <h5>Active Danger Zones</h5>
+      <p class="text-light-gray small">Click any row to locate on map</p>
+      <div style="max-height: 600px; overflow-y: auto;">
+        <table class="table table-dark table-hover">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Risk</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for zone in zones %}
+          <tr onclick="panToZone({{ zone.latitude }}, {{ zone.longitude }})">
+            <td>
+                <b>{{ zone.name }}</b><br>
+                <span class="text-light-gray small">{{ zone.category }}</span>
+            </td>
+            <td>
+              <span class="badge {% if zone.risk == 'High' %}bg-danger{% else %}bg-warning{% endif %}">
+                {{ zone.risk }}
+              </span>
+            </td>
+            <td>
+                <form action="/delete_zone" method="POST" onsubmit="return confirm('Delete this zone?');" onclick="event.stopPropagation()">
+                    <input type="hidden" name="zone_id" value="{{ zone.id }}">
+                    <button class="btn btn-sm btn-outline-danger">🗑</button>
+                </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize Map
+    var map = L.map('adminMap').setView([10.8505, 76.2711], 7); 
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    var marker;
+
+    // Map Click Event (To set new marker)
+    map.on('click', function(e) {
+        setMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    function setMarker(lat, lng, name="") {
+        document.getElementById('lat').value = lat.toFixed(6);
+        document.getElementById('lon').value = lng.toFixed(6);
+        if(name) document.getElementById('zoneName').value = name;
+
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+        // Don't auto-zoom too close on click, just center
+        map.panTo([lat, lng]);
+    }
+
+    // NEW FUNCTION: Spot zone on map
+    function panToZone(lat, lon) {
+        // Fly to location smoothly
+        map.flyTo([lat, lon], 14, {
+            duration: 1.5
+        });
+        
+        // Also place a temporary marker to show exactly where it is
+        setMarker(lat, lon);
+    }
+
+    // SEARCH FUNCTION
+    async function searchLocation() {
+        let query = document.getElementById("searchBox").value;
+        if(!query) return;
+
+        let btn = document.querySelector("button[onclick='searchLocation()']");
+        btn.innerHTML = "⌛";
+
+        try {
+            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}`;
+            let res = await fetch(url);
+            let data = await res.json();
+
+            if(data.length > 0) {
+                let place = data[0];
+                let lat = parseFloat(place.lat);
+                let lon = parseFloat(place.lon);
+                
+                // Use flyTo for search results too
+                map.flyTo([lat, lon], 14);
+                setMarker(lat, lon, place.display_name.split(",")[0]);
+            } else {
+                alert("Location not found!");
+            }
+        } catch(e) {
+            alert("Search failed.");
+        }
+        btn.innerHTML = "🔍 Search";
+    }
+</script>
+
+</body>
+</html>
