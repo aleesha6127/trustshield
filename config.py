@@ -1,7 +1,6 @@
-# Twilio Configuration (Replace with environment variables or your own values)
-TWILIO_SID = "your_twilio_sid_here"
-TWILIO_TOKEN = "your_twilio_token_here"
-TWILIO_NUMBER = "your_twilio_number_here"
+import os
 
-# Admin phone number to receive SOS alerts (MUST be verified in Twilio)
-ADMIN_ALERT_NUMBER = "your_admin_number_here"
+TWILIO_SID = os.getenv("TWILIO_SID", "")
+TWILIO_TOKEN = os.getenv("TWILIO_TOKEN", "")
+TWILIO_NUMBER = os.getenv("TWILIO_NUMBER", "")
+ADMIN_ALERT_NUMBER = os.getenv("ADMIN_ALERT_NUMBER", "")
