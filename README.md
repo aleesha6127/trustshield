@@ -1,129 +1,207 @@
-# TrustShield - Women's Safety & Empowerment Web Application
+# 🛡️ TrustShield – Women's Safety & Empowerment Web Application
 
-TrustShield is an intelligent, feature-rich web platform designed to prioritize women's safety, facilitate emergency response, and provide AI-driven health and travel assistance. 
+TrustShield is an intelligent women's safety and emergency response web application designed to provide real-time safety assistance, AI-powered guidance, and community safety services.
 
-Equipped with live face authentication, real-time geolocation alerts, and integration with the Google Gemini API, TrustShield stands as a modern shield for personal security.
+The platform combines face authentication, emergency alerts, live geolocation, AI assistance, and Firebase-based data management into a unified safety solution.
 
----
+## 🌐 Live Demo
 
-## 🚀 Key Features
+🚀 Live Application: https://trustshield-jqpk.onrender.com
 
-### 1. Advanced Live Face Authentication
-* **Live Face Registration**: Face detection and automatic database check preventing multiple accounts from using the same face.
-* **Face Login**: Fast, secure face scanning for password-less authentication using OpenCV and local-distance calculations (threshold `< 0.45`).
+💻 GitHub Repository: https://github.com/aleesha6127/trustshield
 
-### 2. Emergency Alerts & SMS Integration
-* **Instant SOS**: Triggers geo-targeted alerts with live Google Maps coordinate links to all emergency contacts and system administrators.
-* **Twilio SMS Gateway**: Real-time SMS dispatch containing exact GPS coordinate links.
-* **Unusual Stoppage Alerts**: Journey tracker monitors the trip and sends immediate stoppage warnings to emergency contacts if an unexpected halt occurs.
-
-### 3. AI Safety & Health Companions
-* **Travel Safety AI**: Enter any city to get an instant safety report, local tips, risk ratings, and list of nearby police stations & major hospitals (Powered by **Google Gemini API**).
-* **TrustShield Eva (Health Tracker)**: Interactive cycle tracker with an AI assistant that provides supportive feedback and remedies for menstrual symptoms (Powered by **Google Gemini API**).
-
-### 4. Admin Command Center
-* Interactive map displaying registered **Danger Zones** (with auto-expiry) and active user-reported **Incident locations**.
-* Direct list of registered users and SOS alert histories.
-* Moderation panel for resolving or deleting reported missing person updates.
-
-### 5. Community Safety Services
-* **Missing Persons Board**: Public and protected directory of reports with photo uploading, live search, status updates ("Missing"/"Found"), and unique case IDs.
-* **Incident Reporting**: Submit geo-referenced safety incidents with media/evidence uploads.
-* **Police Complaint Log**: Digital tracker for FIRs, station info, and incident details.
-* **Password Reset**: OTP-based verification via secure SMTP email delivery.
+> Note: The application is deployed on Render's free service. Initial loading may take a few seconds if the server is inactive.
 
 ---
 
-## 🛠 Tech Stack
-* **Backend**: Flask (Python 3.13)
-* **Database**: Firebase Firestore
-* **AI/LLM**: Google Gemini Generative AI (`gemini-1.5-flash-latest`)
-* **Computer Vision**: OpenCV, Face Recognition, Dlib
-* **Communication**: Twilio SMS API, Python SMTP (Email OTPs)
-* **Frontend**: HTML5, Vanilla CSS3, JavaScript, Leaflet.js (Interactive Maps)
+## ✨ Key Features
+
+### 🔐 Live Face Authentication
+
+- Face registration and identity verification
+- Password-less face login
+- Duplicate face detection
+- OpenCV and face recognition integration
+
+### 🚨 Emergency SOS & Location Alerts
+
+- Instant SOS emergency alerts
+- Live GPS coordinate sharing
+- Google Maps location links
+- Twilio SMS integration
+- Emergency contact notifications
+- Unusual journey stoppage alerts
+
+### 🤖 AI Safety Assistant
+
+- AI-powered travel safety analysis
+- City-based safety recommendations
+- Risk awareness and safety guidance
+- Nearby police station and hospital information
+- Powered by Google Gemini AI
+
+### 🌸 TrustShield Eva – Health Companion
+
+- Menstrual cycle tracking
+- AI-powered health assistance
+- Symptom-based supportive guidance
+- Interactive health companion
+
+### 🗺️ Admin Safety Command Center
+
+- Interactive safety map
+- Danger zone monitoring
+- Incident location tracking
+- SOS alert history
+- Registered user management
+- Missing person report moderation
+
+### 👥 Community Safety Services
+
+- Missing persons reporting board
+- Photo and evidence uploads
+- Missing/Found status tracking
+- Unique case IDs
+- Geo-referenced incident reporting
+- Police complaint log
+- OTP-based password recovery
 
 ---
 
-## 📋 Prerequisites
-Before setting up the project, make sure you have:
-1. **Python 3.10+** (Python 3.13 recommended)
-2. **Conda** (Miniconda/Anaconda) - Recommended for installing Dlib and OpenCV dependencies on Windows without compiling from scratch.
-3. **Firebase Firestore Database** - Download your Firebase Admin SDK service account key file and name it `serviceAccountKey.json`.
-4. **Twilio Account** - Twilio SID, Auth Token, and a valid Twilio Number.
-5. **Google Gemini API Key** - Retrieve a key from Google AI Studio.
+## 🛠️ Tech Stack
+
+| Technology | Usage |
+|---|---|
+| Python | Backend Development |
+| Flask | Web Framework |
+| Firebase Firestore | Database |
+| Google Gemini AI | AI Safety & Health Assistance |
+| OpenCV | Computer Vision |
+| Face Recognition | Face Authentication |
+| Dlib | Facial Processing |
+| Twilio API | Emergency SMS Alerts |
+| HTML5 | Web Structure |
+| CSS3 | User Interface |
+| JavaScript | Frontend Interactions |
+| Leaflet.js | Interactive Maps |
+| Gunicorn | Production Server |
+| Render | Cloud Deployment |
 
 ---
 
-## 🔧 Installation & Setup
+## 🚀 Deployment
+
+The TrustShield application is deployed using Render with Gunicorn as the production WSGI server.
+
+**Production URL:**
+
+https://trustshield-jqpk.onrender.com
+
+Sensitive credentials, including Firebase service account credentials, Twilio API credentials, and Gemini API keys, are securely configured using deployment environment variables and secret files.
+
+---
+
+## ⚙️ Installation & Setup
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/aleesha6127/trustshield.git
 cd trustshield
 ```
 
 ### 2. Install Dependencies
-For Windows environments, it is highly recommended to install `dlib` and `face-recognition` via Conda to avoid complex C++ compiler requirements:
-```bash
-# Install core computer vision dependencies
-conda install -y -c conda-forge dlib face_recognition
 
-# Install the rest of the dependencies
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Place Firebase Service Key
-Add your Firebase service credentials file `serviceAccountKey.json` into the root directory of the application:
+### 3. Configure Firebase
+
+Download the Firebase Admin SDK service account credentials.
+
+Save the file as:
+
+```text
+serviceAccountKey.json
 ```
-/TrustShield
-  ├── app.py
-  ├── serviceAccountKey.json  <-- Place here
-  └── ...
-```
+
+Place it in the project root directory.
+
+> ⚠️ Never commit Firebase service account credentials to GitHub.
 
 ### 4. Configure Environment Variables
-Create a `.env` file or export the following environment variables:
+
+Create a `.env` file:
+
 ```env
-FLASK_SECRET_KEY="your-super-secret-key"
-GEMINI_API_KEY="your-gemini-api-key"
-SENDER_EMAIL="your-otp-sender-email@gmail.com"
-SENDER_PASSWORD="your-app-password"
+FLASK_SECRET_KEY=your_secret_key
+GEMINI_API_KEY=your_gemini_api_key
+SENDER_EMAIL=your_email
+SENDER_PASSWORD=your_app_password
+TWILIO_SID=your_twilio_sid
+TWILIO_TOKEN=your_twilio_token
+TWILIO_NUMBER=your_twilio_number
+ADMIN_ALERT_NUMBER=your_admin_phone_number
 ```
 
-Configure `config.py` for Twilio details:
-```python
-TWILIO_SID = "your_twilio_sid"
-TWILIO_TOKEN = "your_twilio_token"
-TWILIO_NUMBER = "your_twilio_phone_number"
-ADMIN_ALERT_NUMBER = "your_personal_admin_phone_number"
-```
+### 5. Run the Application
 
-### 5. Running the Application
-Run the Flask server:
 ```bash
 python app.py
 ```
-Open [http://localhost:5000](http://localhost:5000) in your web browser.
+
+The application will run locally at:
+
+```text
+http://localhost:5000
+```
 
 ---
 
-## 📁 Repository Structure
-```
+## 📁 Project Structure
+
+```text
 TrustShield/
-├── app.py              # Main Flask server entry point (routes, API integrations)
-├── models.py           # Firebase Firestore database handlers
-├── config.py           # Twilio credentials and contact settings
-├── requirements.txt    # List of required python modules
-├── static/             # CSS styling, custom JS scripts, and user uploads
+│
+├── app.py
+├── models.py
+├── config.py
+├── requirements.txt
+│
+├── static/
 │   ├── css/
 │   ├── js/
-│   ├── uploads/        # User evidence/missing person uploads
-│   └── dataset/        # Base64 registered user face image profiles
-├── templates/          # HTML pages (dashboard, missing board, travel AI, Eva tracker)
-└── docs/               # Architecture diagrams and database schemas
+│   ├── uploads/
+│   └── dataset/
+│
+├── templates/
+│
+└── docs/
 ```
 
 ---
 
-## 🛡 License
-This project is open-source and developed for women safety and empowerment during the FAWS Internship.
+## 🎯 Project Objective
+
+TrustShield aims to use modern web technologies, artificial intelligence, geolocation services, and computer vision to build a unified digital safety platform focused on emergency assistance and women's safety.
+
+---
+
+## 👩‍💻 Developer
+
+**Aleesha Anas**
+
+MCA Student | Full Stack & Frontend Developer
+
+🌐 Portfolio: https://aleesha6127.github.io/portfolio/
+
+💻 GitHub: https://github.com/aleesha6127
+
+💼 LinkedIn: https://www.linkedin.com/in/aleesha-anas-a7553533b/
+
+---
+
+## 📄 License
+
+This project was developed as part of the FAWS Internship and focuses on women's safety and empowerment.
